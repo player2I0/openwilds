@@ -1,0 +1,5 @@
+{
+	"web_url": "http://localhost:8001/wilds/",
+	"main_port": 8080,
+	"game_port": 8081
+} 
