@@ -21,3 +21,5 @@ python3 main.py
 ```
 
 To actually *play* on the server, you need to [download the game](https://github.com/player2I0/wildsio)
+
+## [Documentation](https://github.com/player2I0/openwilds/wiki) *(coming soon)*
