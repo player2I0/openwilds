@@ -41,7 +41,7 @@ class Citizen(entity.Entity): #canon entity
 
 		self.p_connection = None #properties starting with p_ will be ignored in encoding
 		self.p_movement_vector = (0, 0)
-		self.p_private = citizen_private_data.CitizenPrivateData(self, sharer)
+		self.p_private = citizen_private_data.PlayerPrivateData(self, sharer)
 		self.p_movement_speed = 150
 		#self.p_pressed = False #indicates whether player pressed left mouse button or not
 		self.p_hitbox = CitizenHitBox(self)
@@ -52,6 +52,8 @@ class Citizen(entity.Entity): #canon entity
 		self.p_skills = citizen_skills.CitizenSkills(self)
 
 	def step(self, game, dt, overlaps):
+		self.p_private.step(game, dt)
+
 		if not self.p_is_dead and self.stateQueue.state.alias not in ['fallFront', 'fallBack']:
 			self.p_inputs.step(dt)
 			self.stateQueue.state.step(dt, game)

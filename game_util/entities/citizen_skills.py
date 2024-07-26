@@ -6,6 +6,7 @@ class CitizenSkills:
 		self.citizen = entity
 
 		self.skills = {}
+		self.used_skills = []
 
 		self.add(CitizenSkillBlock(self))
 		self.add(CitizenSkillRoll(self))
@@ -21,12 +22,13 @@ class CitizenSkill:
 	def __init__(self, skills=None):
 		self.alias = 'skill'
 		self.cooldown = 0
-		self.last_time_used = 0
+		self.last_time_used = time.time()
 		self.skills = skills
 		self.state = citizen_states.CitizenStateIdle
 
 	def use(self):
 		if (time.time() - self.last_time_used >= self.cooldown) and self.skills.citizen.stateQueue.state.alias == 'idle':
+			self.skills.used_skills.append(self.alias)
 			self.last_time_used = time.time()
 
 			self.skills.citizen.stateQueue.set(self.state(self.skills.citizen.stateQueue))
