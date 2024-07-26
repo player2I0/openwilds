@@ -63,6 +63,16 @@ class PingIncomingPacket(IncomingPacket):
 		await self.connection.send_packet(PongOutcomingPacket())
 
 
+class AckIncomingPacket(IncomingPacket):
+	def __init__(self, connection, data):
+		super().__init__(connection)
+
+		self.key = data
+
+	async def process(self, game):
+		await game.connections.broadcast_packet(AckOutcomingPacket(entity=self.connection.citizen, key=self.key))
+
+
 class PointerIncomingPacket(IncomingPacket):
 	def __init__(self, connection, data):
 		super().__init__(connection)
@@ -70,7 +80,7 @@ class PointerIncomingPacket(IncomingPacket):
 		self.x = data[0]
 		self.y = data[1]
 
-		self.blacklist_states = ['jumpAttack', 'dying', 'dead']
+		self.blacklist_states = ['jumpAttack', 'dying', 'dead', 'roll', 'kick', 'fallBack']
 
 	async def process(self, game):
 		if self.x != None and self.y != None:
@@ -180,8 +190,9 @@ class UseSkillIncomingPacket(IncomingPacket):
 	async def process(self, game):
 		player = self.connection.citizen
 
-		if self.skill == 'jump':
-			player.stateQueue.state.set(citizen_states.CitizenStateJump(player.stateQueue))
+		#if self.skill == 'jump':
+			#player.stateQueue.state.set(citizen_states.CitizenStateJump(player.stateQueue))
+		player.p_skills.skills[self.skill].use()
 
 
 class UnsupportedIncomingPacket(IncomingPacket):
@@ -304,3 +315,14 @@ class SetPlayerCitizenOutcomingPacket(OutcomingPacket):
 
 	def build(self, encoded=False, sharer=None):
 		return [self.format(encoded, sharer), {'sid': self.citizen.sid}]
+
+class AckOutcomingPacket(OutcomingPacket):
+	def __init__(self, entity, key):
+		super().__init__()
+		self.alias = 'ack'
+
+		self.entity_sid = entity.sid
+		self.key = key
+
+	def build(self, encoded=False, sharer=None):
+		return [self.format(encoded, sharer), {'entity_sid': self.entity_sid, 'key': self.key}]

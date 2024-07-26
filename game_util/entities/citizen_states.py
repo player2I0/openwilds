@@ -121,6 +121,9 @@ class CitizenStateJumpAttack(CitizenState):
 		self.alias = 'jumpAttack'
 		self.timer = 1
 
+	def after_serialization(self):
+		self.manager.citizen.slash(self.manager.game)
+
 
 class CitizenStateCharge(CitizenState):
 	def __init__(self, manager=None):
@@ -183,3 +186,43 @@ class CitizenStateDead(CitizenState):
 
 	def step(self, dt, game):
 		pass
+
+
+class CitizenStateBlock(CitizenState):
+	def __init__(self, manager=None):
+		super().__init__(manager)
+
+		self.alias = 'block'
+		self.timer = 1
+
+
+class CitizenStateRoll(CitizenState):
+	def __init__(self, manager=None):
+		super().__init__(manager)
+
+		self.alias = 'roll'
+		self.timer = 0.8
+
+	def after_serialization(self):
+		self.manager.citizen.p_pulse.set(timer=0.8, direction=self.manager.citizen.direction, distance=200, const_distance=True)
+		self.manager.citizen.slash(self.manager.game)
+
+
+class CitizenStateKick(CitizenState):
+	def __init__(self, manager=None):
+		super().__init__(manager)
+
+		self.alias = 'kick'
+		self.timer = 0.8
+
+	def after_serialization(self):
+		self.manager.citizen.p_pulse.set(timer=0.8, direction=self.manager.citizen.direction, distance=200, const_distance=False)
+		self.manager.citizen.slash(self.manager.game)
+
+
+class CitizenFallBack(CitizenState):
+	def __init__(self, manager=None):
+		super().__init__(manager)
+
+		self.alias = 'fallBack'
+		self.timer = 1.4

@@ -5,6 +5,7 @@ import game_util.entities.entity as entity
 import game_util.entities.player_private_data as player_private_data
 import game_util.entities.citizen_states as citizen_states
 import game_util.entities.citizen_slashes as citizen_slashes
+import game_util.entities.citizen_skills as citizen_skills
 
 class Citizen(entity.Entity): #canon entity
 	def __init__(self, sharer, game):
@@ -48,9 +49,10 @@ class Citizen(entity.Entity): #canon entity
 		self.p_inputs = CitizenInputs(self)
 		self.p_pulse = entity.EntityPulse(self)
 		self.p_is_dead = False
+		self.p_skills = citizen_skills.CitizenSkills(self)
 
 	def step(self, game, dt, overlaps):
-		if not self.p_is_dead:
+		if not self.p_is_dead and self.stateQueue.state.alias not in ['fallFront', 'fallBack']:
 			self.p_inputs.step(dt)
 			self.stateQueue.state.step(dt, game)
 			self.p_pulse.step(dt)
@@ -81,13 +83,13 @@ class Citizen(entity.Entity): #canon entity
 				self.p_changes.add('x')
 				self.p_changes.add('y')
 
-			if self.stateQueue.state.alias != 'jumpAttack':
+			if self.stateQueue.state.alias not in ['jumpAttack', 'roll', 'kick']:
 				if self.stateQueue.state.alias != 'spin':
 					if self.growling:
-						self.p_movement_speed = 225
+						self.p_movement_speed = 180
 						if self.p_movement_vector != (0, 0):
 							if self.p_private.stamina > 0:
-								self.p_private.stamina -= 0.31 * dt
+								self.p_private.stamina -= 0.3 * dt
 								self.p_private.p_changes.add('stamina')
 								#await self.ws.send(msgpack.packb(['private', [2, formatValueDescriptor(self.private.p['stamina'], 'sfloat')]]))
 								#await self.ws_send(['private', [2, formatValueDescriptor(self.private.p['stamina'], 'sfloat')]])
@@ -97,7 +99,7 @@ class Citizen(entity.Entity): #canon entity
 					else:
 						if self.stateQueue.state.alias == 'idle':
 							if self.p_private.stamina < 1:
-								self.p_private.stamina += 0.12 * dt
+								self.p_private.stamina += 0.1 * dt
 								self.p_private.p_changes.add('stamina')
 								#await self.ws.send(msgpack.packb(['private', [2, formatValueDescriptor(self.private.p['stamina'], 'sfloat')]]))
 								#await self.ws_send(['private', [2, formatValueDescriptor(self.private.p['stamina'], 'sfloat')]])
@@ -119,40 +121,36 @@ class Citizen(entity.Entity): #canon entity
 			self.p_pulse.step(dt)
 
 	def process_collisions(self, game, dt, overlaps):
+		blacklisted_states = ['roll', 'jumpAttack']
+
 		for entity in overlaps:
-			if entity.__class__ == Citizen and not entity.p_is_dead:
-				if self.p_movement_vector != (0, 0):
-					#entity.x -= self.x - entity.x
-					#entity.y -= self.y - entity.y
+			if entity.__class__ == Citizen and not entity.p_is_dead and entity.stateQueue.state.alias not in blacklisted_states and self.stateQueue.state.alias not in blacklisted_states:
+				m = utility.angle_towards_pos(self.x, self.y, entity.x, entity.y)
+				dire = (math.cos(m), math.sin(m))
+				entity.x += dire[0] * self.p_movement_speed/2 * dt
+				entity.y += dire[1] * self.p_movement_speed/2 * dt
+				entity.p_changes.add('x')
+				entity.p_changes.add('y')
 
-					#self.x += self.x - entity.x
-					#self.y += self.y - entity.y
+				self.x -= dire[0] * self.p_movement_speed/2 * dt
+				self.y -= dire[1] * self.p_movement_speed/2 * dt
+				self.p_changes.add('x')
+				self.p_changes.add('y')
 
-					final_movement = (self.p_movement_vector[0] * self.p_movement_speed , self.p_movement_vector[1] * self.p_movement_speed)
-					m = utility.angle_towards_pos(self.x, self.y, entity.x, entity.y)
-					dire = (math.cos(m), math.sin(m))
-					#print(final_movement)
-					entity.x += dire[0] * self.p_movement_speed/2 * dt
-					entity.y += dire[1] * self.p_movement_speed/2 * dt
-					
-					self.x -= final_movement[0]/2 * dt
-					self.y -= final_movement[1]/2 * dt
-
-					entity.p_changes.add('x')
-					entity.p_changes.add('y')
-
-					self.p_changes.add('x')
-					self.p_changes.add('y')
 			elif entity.__class__.__bases__[0] == citizen_slashes.CitizenWeaponSlash:
 				entity.damage_entity(self, game)
 
 
 	def slash(self, game):
-		aliases = ['attack', 'spin']
-		classes = {'axe': [citizen_slashes.CitizenAxeSlash, citizen_slashes.CitizenAxeSpinSlash]}
+		aliases = ['attack', 'spin', 'jumpAttack']
+		skills = {'kick': citizen_slashes.CitizenSkillKickSlash, 'roll': citizen_slashes.CitizenSkillRollSlash}
+		classes = {'axe': [citizen_slashes.CitizenAxeSlash, citizen_slashes.CitizenAxeSpinSlash, citizen_slashes.CitizenAxeJumpAttackSlash]}
 		cl = None
 
-		cl = classes[self.weapon][aliases.index(self.stateQueue.state.alias)]
+		if self.stateQueue.state.alias not in skills:
+			cl = classes[self.weapon][aliases.index(self.stateQueue.state.alias)]
+		else:
+			cl = skills[self.stateQueue.state.alias]
 
 		if cl != None:
 			self.p_weapon_slash = cl(self, self.direction, game)

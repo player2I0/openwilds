@@ -14,6 +14,7 @@ class Game:
 		self.world = GameWorld(self)
 		self.sharer = GameSharer()
 		self.last_step = time.time()
+		self.chat = GameChat(self)
 
 		self.ended = False
 
@@ -41,21 +42,32 @@ class Game:
 			self.connections.remove_ws(websocket)
 
 	async def step(self, dt):
+		#t = time.time()
 		changes = []
 		to_delete = []
+
+		existing_overlaps = {}
 
 		self.world.entities.collisions.build_tree()
 
 		for entity in self.world.entities.groups.citizens:
-			overlaps = self.world.entities.collisions.entity_overlaps(entity)
+			existing_overlaps[entity.sid] = []
 
+			overlaps = self.world.entities.collisions.entity_overlaps(entity)
+			
+			for overlap_entity in overlaps.copy():
+				if overlap_entity.constructorName == 'Citizen' and overlap_entity.sid in existing_overlaps and entity.sid in existing_overlaps[overlap_entity.sid]:
+					overlaps.remove(overlap_entity)
+				else:
+					existing_overlaps[entity.sid].append(overlap_entity.sid)
+			
 			entity.step(self, dt, overlaps)
 
 			if len(entity.p_changes.properties) > 0:
 				changes.append(entity.p_changes.encode(self.sharer))
 
-				if len(entity.p_private.p_changes.properties) > 0:
-					await entity.p_connection.send_packet(packets.PrivateOutcomingPacket(entity.p_private.p_changes.encode(self.sharer)))
+			if len(entity.p_private.p_changes.properties) > 0:
+				await entity.p_connection.send_packet(packets.PrivateOutcomingPacket(entity.p_private.p_changes.encode(self.sharer)))
 
 			if entity.remove:
 				to_delete.append(entity)
@@ -72,6 +84,8 @@ class Game:
 		for entity in to_delete:
 			self.world.entities.remove(entity)
 
+		#print('time to process: ' + '{0:.10f}'.format(time.time() - t) + ' dt: ' + '{0:.10f}'.format(dt))
+
 		return changes
 
 	async def game_loop(self, dt):
@@ -87,6 +101,13 @@ class Game:
 			await self.game_loop(time.time() - self.last_step)
 			self.last_step = time.time()
 			await asyncio.sleep(t)
+
+
+class GameChat:
+	def __init__(self, game):
+		self.game = game
+
+		self.messages = []
 
 
 class GameWorld:

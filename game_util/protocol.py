@@ -44,7 +44,7 @@ class GamePlayerConnection:
 	async def send_packet(self, packet):
 		try:
 			await self.ws.send(msgpack.packb(packet.build()))
-		except websockets.exceptions.ConnectionClosedOK as e:
+		except (websockets.exceptions.ConnectionClosedOK, websockets.exceptions.ConnectionClosedError) as e:
 			pass
 
 def build_incoming_packet(connection, data):
@@ -70,5 +70,7 @@ def build_incoming_packet(connection, data):
 		return packets.ReleaseIncomingPacket(connection, msg[1])
 	elif msg[0] == 'useSkill':
 		return packets.UseSkillIncomingPacket(connection, msg[1])
+	elif msg[0] == 'ack':
+		return packets.AckIncomingPacket(connection, msg[1])
 	else:
 		return packets.UnsupportedIncomingPacket(connection, msg)
