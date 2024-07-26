@@ -8,6 +8,7 @@ class CitizenWeaponSlash(entity.Entity):
 	def __init__(self, citizen, angle, game=None):
 		super().__init__()
 		self.citizen = citizen
+		self.constructorName = 'CitizenWeaponSlash'
 
 		self.start_delay = 0
 		self.angle = angle

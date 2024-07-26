@@ -1,7 +1,7 @@
 import game_util.entities.entity as entity
 
 class CitizenPrivateData(entity.Entity): #canon entity
-	def __init__(self, player, sharer):
+	def __init__(self, entity, sharer):
 		super().__init__()
 
 		self.items = [{'count': 0}, {'count': 0}, {'count': 0}, {'count': 0}]
@@ -19,5 +19,5 @@ class CitizenPrivateData(entity.Entity): #canon entity
 			if property != 'sid' and property != 'constructorName' and property.find('p_') == -1:
 				self.p_changes.add(property, sharer) #because at the start we need 255 change hash
 
-		self.p_player = player
+		self.p_citizen = entity
 		self.p_is_entity = False

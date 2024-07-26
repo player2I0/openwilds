@@ -4,7 +4,7 @@ import math
 import game_util.entities.citizen as citizen
 import game_util.entities.citizen_states as citizen_states
 import game_util.entities.entity as entity
-import game_util.entities.player_private_data as player_private_data
+import game_util.entities.citizen_private_data as citizen_private_data
 
 def format_descriptor_value(val, type, sharer):
 	if type == 'sfloat':
@@ -15,7 +15,7 @@ def format_descriptor_value(val, type, sharer):
 		return int(val)
 	elif type == 'key':
 		return sharer.values[val]
-	elif val.__class__.__name__ in vars(citizen) or val.__class__.__name__ in vars(entity) or val.__class__.__name__ in vars(player_private_data) or val.__class__.__name__ in vars(citizen_states): # check if val is a class in citizen.py. for example, it is statequeue of citizen
+	elif val.__class__.__name__ in vars(citizen) or val.__class__.__name__ in vars(entity) or val.__class__.__name__ in vars(citizen_private_data) or val.__class__.__name__ in vars(citizen_states): # check if val is a class in citizen.py. for example, it is statequeue of citizen
 		return val.encode(sharer)
 	else:
 		return val

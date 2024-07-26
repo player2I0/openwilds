@@ -124,7 +124,7 @@ class Citizen(entity.Entity): #canon entity
 		blacklisted_states = ['roll', 'jumpAttack']
 
 		for entity in overlaps:
-			if entity.__class__ == Citizen and not entity.p_is_dead and entity.stateQueue.state.alias not in blacklisted_states and self.stateQueue.state.alias not in blacklisted_states:
+			if entity.constructorName == 'Citizen' and not entity.p_is_dead and entity.stateQueue.state.alias not in blacklisted_states and self.stateQueue.state.alias not in blacklisted_states:
 				m = utility.angle_towards_pos(self.x, self.y, entity.x, entity.y)
 				dire = (math.cos(m), math.sin(m))
 				entity.x += dire[0] * self.p_movement_speed/2 * dt
@@ -137,7 +137,7 @@ class Citizen(entity.Entity): #canon entity
 				self.p_changes.add('x')
 				self.p_changes.add('y')
 
-			elif entity.__class__.__bases__[0] == citizen_slashes.CitizenWeaponSlash:
+			elif entity.constructorName == 'CitizenWeaponSlash':
 				entity.damage_entity(self, game)
 
 
