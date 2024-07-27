@@ -98,9 +98,13 @@ class Game:
 
 	async def launch_game_loop(self, t):
 		while True:
-			await self.game_loop(time.time() - self.last_step)
-			self.last_step = time.time()
-			await asyncio.sleep(t)
+			start = time.time()
+			dt = time.time() - self.last_step
+			self.last_step += dt
+
+			await self.game_loop(dt)
+
+			await asyncio.sleep(start + t - time.time())
 
 
 class GameChat:
