@@ -21,7 +21,7 @@ class CitizenWeaponSlash(entity.Entity):
 		self.blacklisted_states = []
 		self.hit_parameters = {'projectile_sid': 0, 'kick': False, 'missile': False, 'blocked': False, 'fall': False, 'stun': False, 'crush': False, 'reverse': False, 'blockBroken': False}
 		
-		self.victim_state = None
+		self.victim_state_response = {} # if self.citizen.stateQueue.state.alias is equal to one of keys, the victim's state is set to correspodning value of the key
 		self.victim_face_attacker = False
 
 		if game != None:
@@ -61,8 +61,10 @@ class CitizenWeaponSlash(entity.Entity):
 			else:
 				entity.p_pulse.set(timer=0.3, direction=utility.angle_towards_pos(self.citizen.x, self.citizen.y, entity.x, entity.y), distance=500, const_distance=False)
 
-				if self.victim_state != None:
-					entity.stateQueue.set(self.victim_state(entity.stateQueue))
+				if type(self.victim_state_response) is dict and self.citizen.state.alias in self.victim_state_response:
+					entity.stateQueue.set(self.victim_state_response[self.citizen.state.alias](entity.stateQueue))
+				elif self.victim_state_response != None:
+					entity.stateQueue.set(self.victim_state_response(entity.stateQueue))
 
 				if self.victim_face_attacker:
 					entity.direction = utility.angle_towards_pos(entity.x, entity.y, self.citizen.x, self.citizen.y)

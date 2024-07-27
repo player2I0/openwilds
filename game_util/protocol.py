@@ -50,27 +50,23 @@ class GamePlayerConnection:
 def build_incoming_packet(connection, data):
 	msg = msgpack.unpackb(data, raw=False)
 
-	if msg[0] == 'hello':
-		return packets.HelloIncomingPacket(connection, msg[1])
-	elif msg[0] == 'ping':
-		return packets.PingIncomingPacket(connection, msg[1])
-	elif msg[0] == 'pointer':
-		return packets.PointerIncomingPacket(connection, msg[1])
-	elif msg[0] == 'direction':
-		return packets.DirectionIncomingPacket(connection, msg[1])
-	elif msg[0] == 'move':
-		return packets.MoveIncomingPacket(connection, msg[1])
-	elif msg[0] == 'growl_start':
-		return packets.GrowlStartIncomingPacket(connection, msg[1])
-	elif msg[0] == 'growl_stop':
-		return packets.GrowlStopIncomingPacket(connection, msg[1])
-	elif msg[0] == 'press':
-		return packets.PressIncomingPacket(connection, msg[1])
-	elif msg[0] == 'release':
-		return packets.ReleaseIncomingPacket(connection, msg[1])
-	elif msg[0] == 'useSkill':
-		return packets.UseSkillIncomingPacket(connection, msg[1])
-	elif msg[0] == 'ack':
-		return packets.AckIncomingPacket(connection, msg[1])
+	packs = {
+		'hello': packets.HelloIncomingPacket,
+		'ping': packets.PingIncomingPacket,
+		'pointer': packets.PointerIncomingPacket,
+		'direction': packets.DirectionIncomingPacket,
+		'move': packets.MoveIncomingPacket,
+		'growl_start': packets.GrowlStartIncomingPacket,
+		'growl_stop': packets.GrowlStopIncomingPacket,
+		'press': packets.PressIncomingPacket,
+		'release': packets.ReleaseIncomingPacket,
+		'useSkill': packets.UseSkillIncomingPacket,
+		'ack': packets.AckIncomingPacket,
+		'message': packets.MessageIncomingPacket,
+		'chatHistory': packets.ChatHistoryIncomingPacket
+	}
+
+	if msg[0] in packs:
+		return packs[msg[0]](connection, msg[1])
 	else:
 		return packets.UnsupportedIncomingPacket(connection, msg)

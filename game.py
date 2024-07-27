@@ -109,6 +109,25 @@ class GameChat:
 
 		self.messages = []
 
+	def add_message(self, msg):
+		self.messages.append(msg)
+
+	async def say(self, conn, txt, game):
+		if len(txt.strip()) > 0:
+			msg = GameChatMessage(conn.citizen, txt)
+			self.add_message(msg)
+
+			await game.connections.broadcast_packet(packets.SayOutcomingPacket(entity_sid=msg.entity_sid, text=msg.text))
+
+
+class GameChatMessage:
+	def __init__(self, entity, text, system=False):
+		self.system = system
+
+		self.entity_sid = entity.sid
+		self.text = text
+		self.nickname = entity.name
+
 
 class GameWorld:
 	def __init__(self, game):

@@ -43,7 +43,7 @@ class HelloIncomingPacket(IncomingPacket):
 		game.world.entities.groups.add('citizens', player)
 		self.connection.citizen = player
 
-		await self.connection.send_packet(SayOutcomingPacket(system=True, text="Welcome to EU server"))
+		await self.connection.send_packet(SayOutcomingPacket(system=True, text="Welcome to EU server", entity_sid=None))
 
 		#await self.connection.ws.send(msgpack.packb(['snapshot', {'ended': False, 'entities': [player.encode(game.sharer)], 'innerWidth': 1984, 'innerHeight': 1518, 'lifetime': 1, 'mapData': '{}', 'mapName': '', 'mode': 'fun', 'sharedKeys': game.sharer.encoded, 'speed': 1}]))
 		await self.connection.send_packet(SnapshotOutcomingPacket(game=game))
@@ -195,6 +195,24 @@ class UseSkillIncomingPacket(IncomingPacket):
 		player.p_skills.skills[self.skill].use()
 
 
+class MessageIncomingPacket(IncomingPacket):
+	def __init__(self, connection, data):
+		super().__init__(connection)
+
+		self.text = data['text']
+
+	async def process(self, game):
+		await game.chat.say(self.connection, self.text, game)
+
+
+class ChatHistoryIncomingPacket(IncomingPacket):
+	def __init__(self, connection, data):
+		super().__init__(connection)
+
+	async def process(self, game):
+		pass
+
+
 class UnsupportedIncomingPacket(IncomingPacket):
 	def __init__(self, connection, data):
 		super().__init__(connection)
@@ -295,15 +313,19 @@ class UpdateOutcomingPacket(OutcomingPacket):
 
 
 class SayOutcomingPacket(OutcomingPacket):
-	def __init__(self, system, text):
+	def __init__(self, entity_sid, text, system=False):
 		super().__init__()
 		self.alias = 'say'
 
 		self.system = system
 		self.text = text
+		self.entity_sid = entity_sid
 
 	def build(self, encoded=False, sharer=None):
-		return [self.format(encoded, sharer), {'system': self.system, 'text': self.text}]
+		if self.system:
+			return [self.format(encoded, sharer), {'system': self.system, 'text': self.text, 'channel': 'default'}]
+		else:
+			return [self.format(encoded, sharer), {'entity_sid': self.entity_sid, 'text': self.text, 'channel': 'default'}]
 
 
 class SetPlayerCitizenOutcomingPacket(OutcomingPacket):
@@ -326,3 +348,5 @@ class AckOutcomingPacket(OutcomingPacket):
 
 	def build(self, encoded=False, sharer=None):
 		return [self.format(encoded, sharer), {'entity_sid': self.entity_sid, 'key': self.key}]
+
+
